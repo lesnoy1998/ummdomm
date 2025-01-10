@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spirit:component xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"
+                  xmlns:xilinx="http://www.xilinx.com"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- Общая информация о компоненте -->
+  <spirit:vendor>mycompany.com</spirit:vendor>
+  <spirit:library>user</spirit:library>
+  <spirit:name>umdom_TOP</spirit:name>
+  <spirit:version>1.0</spirit:version>
+
+  <!-- 
+    Блок <busInterfaces> описывает все шины/интерфейсы.
+    Мы хотим ровно один AXI Slave-интерфейс под именем S_AXI.
+  -->
+  <spirit:busInterfaces>
+    <spirit:busInterface>
+      <!-- Имя интерфейса -->
+      <spirit:name>S_AXI</spirit:name>
+
+      <!-- Тип шины: AXI4 или AXI4-Lite. Ниже "aximm" = AXI4/AXI4-Lite.
+           "aximm_rtl" = реализация на уровне RTL. -->
+      <spirit:busType spirit:vendor="xilinx.com"
+                      spirit:library="interface"
+                      spirit:name="aximm"
+                      spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com"
+                              spirit:library="interface"
+                              spirit:name="aximm_rtl"
+                              spirit:version="1.0"/>
+
+      <!-- Указываем, что это Slave-интерфейс -->
+      <spirit:slave>
+        <!-- Ссылаемся на memoryMap с именем "S_AXI" (будет описан ниже) -->
+        <spirit:memoryMapRef spirit:memoryMapRef="S_AXI"/>
+      </spirit:slave>
+
+      <!-- Маппинг логических сигналов AXI на физические порты -->
+      <spirit:portMaps>
+        <!-- Такт AXI -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ACLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_ACLK</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- Сброс AXI (активный низкий) -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ARESETN</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_ARESETN</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- AWADDR -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>AWADDR</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_AWADDR</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- AWVALID -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>AWVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_AWVALID</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- AWREADY -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>AWREADY</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_AWREADY</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- WDATA -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>WDATA</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_WDATA</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- WVALID -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>WVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_WVALID</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- WREADY -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>WREADY</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_WREADY</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- BRESP -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>BRESP</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_BRESP</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- BVALID -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>BVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_BVALID</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- BREADY -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>BREADY</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_BREADY</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- ARADDR -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ARADDR</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_ARADDR</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- ARVALID -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ARVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_ARVALID</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- ARREADY -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ARREADY</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_ARREADY</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- RDATA -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>RDATA</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_RDATA</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- RVALID -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>RVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_RVALID</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+        <!-- RREADY -->
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>RREADY</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>S_AXI_RREADY</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+
+      </spirit:portMaps>
+    </spirit:busInterface>
+  </spirit:busInterfaces>
+
+  <!-- 
+    memoryMaps: здесь вы описываете, что у интерфейса S_AXI 
+    есть некоторый диапазон адресов.
+  -->
+  <spirit:memoryMaps>
+    <spirit:memoryMap>
+      <spirit:name>S_AXI</spirit:name>
+      <!-- addressBlock с примерным размером, например 64KB -->
+      <spirit:addressBlock>
+        <spirit:name>regs</spirit:name>
+        <spirit:baseAddress spirit:format="long">0x00000000</spirit:baseAddress>
+        <spirit:range spirit:format="long">0x10000</spirit:range>
+        <spirit:width spirit:format="long">32</spirit:width>
+        <spirit:usage>register</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+  </spirit:memoryMaps>
+
+  <!-- 
+    Описание (через <model>) всех физических портов: 
+    1) S_AXI_ACLK, S_AXI_ARESETN, ..., 
+    2) temp_sensor_in, window_control, etc.
+  -->
+  <spirit:model>
+    <spirit:ports>
+
+      <!-- ================== AXI Ports ===================== -->
+
+      <!-- ACLK -->
+      <spirit:port>
+        <spirit:name>S_AXI_ACLK</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC</spirit:typeName>
+              <!-- Синтез/симуляция -->
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- ARESETN (активный низкий сброс) -->
+      <spirit:port>
+        <spirit:name>S_AXI_ARESETN</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>STD_LOGIC</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- AWADDR -->
+      <spirit:port>
+        <spirit:name>S_AXI_AWADDR</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">31</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- AWVALID -->
+      <spirit:port>
+        <spirit:name>S_AXI_AWVALID</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- AWREADY -->
+      <spirit:port>
+        <spirit:name>S_AXI_AWREADY</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- WDATA -->
+      <spirit:port>
+        <spirit:name>S_AXI_WDATA</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">31</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- WVALID -->
+      <spirit:port>
+        <spirit:name>S_AXI_WVALID</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- WREADY -->
+      <spirit:port>
+        <spirit:name>S_AXI_WREADY</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- BRESP -->
+      <spirit:port>
+        <spirit:name>S_AXI_BRESP</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">1</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- BVALID -->
+      <spirit:port>
+        <spirit:name>S_AXI_BVALID</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- BREADY -->
+      <spirit:port>
+        <spirit:name>S_AXI_BREADY</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- ARADDR -->
+      <spirit:port>
+        <spirit:name>S_AXI_ARADDR</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">31</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- ARVALID -->
+      <spirit:port>
+        <spirit:name>S_AXI_ARVALID</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- ARREADY -->
+      <spirit:port>
+        <spirit:name>S_AXI_ARREADY</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- RDATA -->
+      <spirit:port>
+        <spirit:name>S_AXI_RDATA</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">31</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- RVALID -->
+      <spirit:port>
+        <spirit:name>S_AXI_RVALID</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- RREADY -->
+      <spirit:port>
+        <spirit:name>S_AXI_RREADY</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- 
+         Теперь перечисляем пользовательские порты (температура и т.д.)
+         Они не являются частью AXI-интерфейса, так что 
+         мы описываем их просто как обычные single-ended порты.
+      -->
+
+      <!-- temp_sensor_in -->
+      <spirit:port>
+        <spirit:name>temp_sensor_in</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">11</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- temp_valid -->
+      <spirit:port>
+        <spirit:name>temp_valid</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- window_position -->
+      <spirit:port>
+        <spirit:name>window_position</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">7</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- window_busy -->
+      <spirit:port>
+        <spirit:name>window_busy</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+        </spirit:wire>
+      </spirit:port>
+
+      <!-- window_control -->
+      <spirit:port>
+        <spirit:name>window_control</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">1</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+        </spirit:wire>
+      </spirit:port>
+
+    </spirit:ports>
+  </spirit:model>
+
+  <!-- 
+     Ниже — fileSets, description, параметры и т.д., 
+     оформляйте в соответствии с вашим проектом/структурой.
+  -->
+  <spirit:fileSets>
+    <spirit:fileSet>
+      <spirit:name>xilinx_anylanguagesynthesis_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>src/umdom_TOP.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:isIncludeFile>false</spirit:isIncludeFile>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+    </spirit:fileSet>
+    <!-- Аналогично можно добавить fileSet для simulation и т.д. -->
+  </spirit:fileSets>
+
+  <spirit:description>umdom_TOP IP with AXI Slave interface</spirit:description>
+
+  <spirit:parameters>
+    <spirit:parameter>
+      <spirit:name>Component_Name</spirit:name>
+      <spirit:value spirit:resolve="user">umdom_TOP_v1_0</spirit:value>
+    </spirit:parameter>
+  </spirit:parameters>
+
+  <spirit:vendorExtensions>
+    <xilinx:coreExtensions>
+      <xilinx:supportedFamilies>
+        <xilinx:family xilinx:lifeCycle="Production">virtex7</xilinx:family>
+      </xilinx:supportedFamilies>
+      <xilinx:taxonomies>
+        <xilinx:taxonomy>/UserIP</xilinx:taxonomy>
+      </xilinx:taxonomies>
+      <xilinx:displayName>umdom_TOP_v1_0</xilinx:displayName>
+      <xilinx:definitionSource>package_project</xilinx:definitionSource>
+      <xilinx:coreRevision>1</xilinx:coreRevision>
+      <xilinx:coreCreationDateTime>2025-01-10T10:00:00Z</xilinx:coreCreationDateTime>
+    </xilinx:coreExtensions>
+
+    <xilinx:packagingInfo>
+      <xilinx:xilinxVersion>2022.2.2</xilinx:xilinxVersion>
+      <!-- Контрольные суммы по желанию -->
+    </xilinx:packagingInfo>
+  </spirit:vendorExtensions>
+
+</spirit:component>
