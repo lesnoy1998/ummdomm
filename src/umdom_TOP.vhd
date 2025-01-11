@@ -4,145 +4,143 @@ USE IEEE.NUMERIC_STD.ALL;
 
 ENTITY umdom_TOP IS
   PORT (
-    ----------------------------------------------------------------------------
-    -- AXI4-Lite (или AXI4) Slave Interface
-    ----------------------------------------------------------------------------
-    S_AXI_ACLK    : IN  STD_LOGIC;                        -- Тактовый AXI сигнал
-    S_AXI_ARESETN : IN  STD_LOGIC;                        -- AXI-сброс, активный '0'
-
-    S_AXI_AWADDR  : IN  STD_LOGIC_VECTOR(31 DOWNTO 0);
-    S_AXI_AWVALID : IN  STD_LOGIC;
-    S_AXI_AWREADY : OUT STD_LOGIC;
-
-    S_AXI_WDATA   : IN  STD_LOGIC_VECTOR(31 DOWNTO 0);
-    S_AXI_WVALID  : IN  STD_LOGIC;
-    S_AXI_WREADY  : OUT STD_LOGIC;
-
-    S_AXI_BRESP   : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-    S_AXI_BVALID  : OUT STD_LOGIC;
-    S_AXI_BREADY  : IN  STD_LOGIC;
-
-    S_AXI_ARADDR  : IN  STD_LOGIC_VECTOR(31 DOWNTO 0);
-    S_AXI_ARVALID : IN  STD_LOGIC;
-    S_AXI_ARREADY : OUT STD_LOGIC;
-
-    S_AXI_RDATA   : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-    S_AXI_RVALID  : OUT STD_LOGIC;
-    S_AXI_RREADY  : IN  STD_LOGIC;
-
-    ----------------------------------------------------------------------------
-    -- Прочие пользовательские порты (температура, окно и т.д.)
-    ----------------------------------------------------------------------------
-    temp_sensor_in : IN  STD_LOGIC_VECTOR(11 DOWNTO 0);  -- АЦП температуры (12 бит)
-    temp_valid     : IN  STD_LOGIC;                      -- Валидность данных температуры
+    refclk          : IN  STD_LOGIC;
+    sys_rst_n       : IN  STD_LOGIC;
+    temp_sensor_in  : IN  STD_LOGIC_VECTOR (11 DOWNTO 0);
+    temp_valid      : IN  STD_LOGIC;
+    window_busy     : IN  STD_LOGIC;
+    window_control  : OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
+    window_position : IN  STD_LOGIC_VECTOR (7 DOWNTO 0);
     
-    window_position : IN  STD_LOGIC_VECTOR(7 DOWNTO 0);  -- Текущее положение окна
-    window_control  : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);  -- Управление приводом (00-стоп, 01-открыть, 10-закрыть)
-    window_busy     : IN  STD_LOGIC                      -- Флаг занятости привода
+    -- Добавляем порты AXI
+    m_axi_awaddr  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axi_awvalid : OUT STD_LOGIC;
+    m_axi_awready : IN  STD_LOGIC;
+    m_axi_wdata   : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axi_wvalid  : OUT STD_LOGIC;
+    m_axi_wready  : IN  STD_LOGIC;
+    m_axi_bresp   : IN  STD_LOGIC_VECTOR(1 DOWNTO 0);
+    m_axi_bvalid  : IN  STD_LOGIC;
+    m_axi_bready  : OUT STD_LOGIC;
+    
+    -- Добавляем порты AXI для чтения
+    m_axi_araddr  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axi_arvalid : OUT STD_LOGIC;
+    m_axi_arready : IN  STD_LOGIC;
+    m_axi_rdata   : IN  STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axi_rresp   : IN  STD_LOGIC_VECTOR(1 DOWNTO 0);
+    m_axi_rvalid  : IN  STD_LOGIC;
+    m_axi_rready  : OUT STD_LOGIC
   );
 END ENTITY umdom_TOP;
 
 ARCHITECTURE rtl OF umdom_TOP IS
-
-  ----------------------------------------------------------------------------
-  -- Внутренние сигналы
-  ----------------------------------------------------------------------------
-  SIGNAL awready_internal : STD_LOGIC := '0';
-  SIGNAL wready_internal  : STD_LOGIC := '0';
-  SIGNAL bvalid_internal  : STD_LOGIC := '0';
-  SIGNAL bresp_internal   : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00";
-
-  -- Регистры для хранения настроек
-  SIGNAL temp_threshold     : STD_LOGIC_VECTOR(11 DOWNTO 0) := x"1F4";  -- 50°C по умолчанию
-  SIGNAL window_auto_mode   : STD_LOGIC := '1';                         -- Автоматический режим
-  SIGNAL window_control_reg : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00";
+  -- Константы для управления окном
+  CONSTANT TEMP_THRESHOLD : unsigned(11 DOWNTO 0) := x"1F0"; -- 49.6°C
+  
+  -- Сигналы управления
+  SIGNAL window_control_reg : STD_LOGIC_VECTOR(1 DOWNTO 0);
+  
+  -- Добавляем сигналы для AXI
+  SIGNAL axi_awvalid_reg : STD_LOGIC := '0';
+  SIGNAL axi_wvalid_reg  : STD_LOGIC := '0';
+  SIGNAL axi_bready_reg  : STD_LOGIC := '1';
+  SIGNAL write_pending   : STD_LOGIC := '0';
+  
+  -- Добавляем сигналы для чтения
+  SIGNAL axi_arvalid_reg : STD_LOGIC := '0';
+  SIGNAL axi_rready_reg  : STD_LOGIC := '1';
+  SIGNAL read_pending    : STD_LOGIC := '0';
+  SIGNAL prev_temp       : STD_LOGIC_VECTOR(11 DOWNTO 0);
+  
+  -- Состояния для конечного автомата
+  TYPE state_type IS (IDLE, WRITING, READING);
+  SIGNAL current_state : state_type := IDLE;
 
 BEGIN
-
-  ----------------------------------------------------------------------------
-  -- Процесс записи (AXI Write)
-  ----------------------------------------------------------------------------
-  axi_write_process: PROCESS(S_AXI_ACLK)
+  -- Процесс управления записью/чтением памяти
+  memory_process : PROCESS(refclk)
   BEGIN
-    IF rising_edge(S_AXI_ACLK) THEN
-      -- Переходим на сброс, активный НИЗКИЙ
-      IF (S_AXI_ARESETN = '0') THEN
-        awready_internal <= '0';
-        wready_internal  <= '0';
-        bvalid_internal  <= '0';
-        bresp_internal   <= "00";
-        temp_threshold   <= x"1F4";
-        window_auto_mode <= '1';
-
+    IF rising_edge(refclk) THEN
+      IF sys_rst_n = '0' THEN
+        axi_awvalid_reg <= '0';
+        axi_wvalid_reg  <= '0';
+        axi_arvalid_reg <= '0';
+        write_pending   <= '0';
+        read_pending    <= '0';
+        current_state   <= IDLE;
       ELSE
-        -- По умолчанию готовы принимать новые транзакции
-        awready_internal <= '1';
-        wready_internal  <= '1';
+        CASE current_state IS
+          WHEN IDLE =>
+            IF temp_valid = '1' THEN
+              -- Начинаем запись
+              axi_awvalid_reg <= '1';
+              axi_wvalid_reg  <= '1';
+              write_pending   <= '1';
+              current_state   <= WRITING;
+            END IF;
 
-        IF (S_AXI_AWVALID = '1' AND S_AXI_WVALID = '1') THEN
-          -- Пришли адрес и данные одновременно
-          bvalid_internal <= '1';
-          bresp_internal  <= "00";  -- OKAY response
+          WHEN WRITING =>
+            IF m_axi_awready = '1' AND m_axi_wready = '1' AND write_pending = '1' THEN
+              -- Завершаем запись и начинаем чтение
+              axi_awvalid_reg <= '0';
+              axi_wvalid_reg  <= '0';
+              write_pending   <= '0';
+              axi_arvalid_reg <= '1';
+              read_pending    <= '1';
+              current_state   <= READING;
+            END IF;
 
-          -- Пример записи в регистры:
-          CASE S_AXI_AWADDR(7 DOWNTO 0) IS
-            WHEN x"00" =>
-              temp_threshold <= S_AXI_WDATA(11 DOWNTO 0);
-            WHEN x"04" =>
-              window_auto_mode <= S_AXI_WDATA(0);
-            WHEN OTHERS =>
-              NULL;
-          END CASE;
-
-        ELSIF (S_AXI_BREADY = '1' AND bvalid_internal = '1') THEN
-          -- Сбрасываем BVALID после того, как мастер прочитал
-          bvalid_internal <= '0';
-        END IF;
-
+          WHEN READING =>
+            IF m_axi_arready = '1' THEN
+              axi_arvalid_reg <= '0';
+            END IF;
+            
+            IF m_axi_rvalid = '1' AND read_pending = '1' THEN
+              prev_temp <= m_axi_rdata(11 DOWNTO 0);
+              read_pending <= '0';
+              current_state <= IDLE;
+            END IF;
+        END CASE;
       END IF;
     END IF;
   END PROCESS;
 
-  ----------------------------------------------------------------------------
-  -- Процесс управления окном (пример логики)
-  ----------------------------------------------------------------------------
-  window_control_process: PROCESS(S_AXI_ACLK)
+  -- Процесс управления окном
+  window_control_process : PROCESS(refclk)
   BEGIN
-    IF rising_edge(S_AXI_ACLK) THEN
-      IF (S_AXI_ARESETN = '0') THEN
+    IF rising_edge(refclk) THEN
+      IF sys_rst_n = '0' THEN
         window_control_reg <= "00";
       ELSE
-        IF window_auto_mode = '1' AND temp_valid = '1' THEN
-          IF unsigned(temp_sensor_in) > unsigned(temp_threshold) AND (window_position = x"00") THEN
-            window_control_reg <= "01";
-          ELSIF unsigned(temp_sensor_in) < unsigned(temp_threshold) AND (window_position = x"FF") THEN
-            window_control_reg <= "10";
+        IF temp_valid = '1' AND window_busy = '0' THEN
+          -- Если температура выше порога и окно закрыто - открываем
+          IF unsigned(temp_sensor_in) > TEMP_THRESHOLD AND window_position = x"00" THEN
+            window_control_reg <= "01";  -- Команда открытия
+          -- Если температура ниже порога и окно открыто - закрываем
+          ELSIF unsigned(temp_sensor_in) < TEMP_THRESHOLD AND window_position = x"FF" THEN
+            window_control_reg <= "10";  -- Команда закрытия
           ELSE
-            window_control_reg <= "00";
+            window_control_reg <= "00";  -- Нет действия
           END IF;
+        ELSE
+          window_control_reg <= "00";  -- Нет действия при неактивном датчике или занятом окне
         END IF;
       END IF;
     END IF;
   END PROCESS;
 
-  ----------------------------------------------------------------------------
-  -- Выходные сигналы AXI
-  ----------------------------------------------------------------------------
-  S_AXI_AWREADY <= awready_internal;
-  S_AXI_WREADY  <= wready_internal;
-  S_AXI_BVALID  <= bvalid_internal;
-  S_AXI_BRESP   <= bresp_internal;
-
-  ----------------------------------------------------------------------------
-  -- Пример заглушки для чтения (AR не обрабатываем)
-  ----------------------------------------------------------------------------
-  S_AXI_ARREADY <= '0'; 
-  S_AXI_RVALID  <= '0';
-  S_AXI_RDATA   <= (OTHERS => '0');
-
-  ----------------------------------------------------------------------------
-  -- Выходы управления окном
-  ----------------------------------------------------------------------------
+  -- Назначение сигналов AXI
+  m_axi_awaddr  <= x"00000000";  -- Адрес для записи
+  m_axi_araddr  <= x"00000000";  -- Тот же адрес для чтения
+  m_axi_awvalid <= axi_awvalid_reg;
+  m_axi_arvalid <= axi_arvalid_reg;
+  m_axi_wdata   <= x"00000" & temp_sensor_in;
+  m_axi_wvalid  <= axi_wvalid_reg;
+  m_axi_bready  <= axi_bready_reg;
+  m_axi_rready  <= axi_rready_reg;
+  
+  -- Назначение выходного сигнала
   window_control <= window_control_reg;
 
 END ARCHITECTURE rtl;

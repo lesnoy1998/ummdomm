@@ -47,12 +47,8 @@ if {![info exists CNSTR_DIR]} {
 } 
 set __CNSTR_PATH "[file normalize "$CNSTR_DIR"]" 
  
-if {![info exists IP_NAME]} { 
-	set IP_NAME tim 
-} 
- 
 if {![info exists IP_PATH]} { 
-	set IP_PATH ../ip 
+	set IP_PATH ip
 } 
 set __IP_PATH "[file normalize "$IP_PATH"]" 
  
